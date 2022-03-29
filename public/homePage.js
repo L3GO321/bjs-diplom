@@ -1,139 +1,103 @@
 'use strict';
 
-const getUserInfo = response => {
-    console.log('userData', response);
-
-    if (response.success) {
-        ProfileWidget.showProfile(response.data);
-    }
-}
+const newLogoutButton = new LogoutButton();
+const exchangeRatesBoard = new RatesBoard();
+const balanceMoney = new MoneyManager();
+const listFavoritesWidget = new FavoritesWidget();
 
 const getExchangeRates = () => {
-    const getRates = response => {
-        console.log('ratesData', response);
-
+    ApiConnector.getStocks(response => { 
         if (response.success) {
-            RatesBoard1.clearTable();
-            RatesBoard1.fillTable(response.data);
+            exchangeRatesBoard.clearTable();
+            exchangeRatesBoard.fillTable(response.data);
         }
-    }
-
-    ApiConnector.getStocks(response => getRates(response));    
+    });    
 }
 
 const getFavoritesList = () => {
-    const getList = response => {
-        console.log('dataFavorites', response);
-
+    ApiConnector.getFavorites(response => {
         if (response.success) {
-            FavoritesWidget1.clearTable();
-            FavoritesWidget1.fillTable(response.data);
-            MoneyManager1.updateUsersList(response.data);
+            listFavoritesWidget.clearTable();
+            listFavoritesWidget.fillTable(response.data);
+            balanceMoney.updateUsersList(response.data);
         }
-    }
-
-    ApiConnector.getFavorites(response => getList(response));
+    });
 }
 
-const LogoutButton1 = new LogoutButton();
-const RatesBoard1 = new RatesBoard();
-const MoneyManager1 = new MoneyManager();
-const FavoritesWidget1 = new FavoritesWidget();
-
-LogoutButton1.action = () => {
-    const logout = response => {
-        console.log('dataLogout', response);
-
+newLogoutButton.action = () => {
+    ApiConnector.logout(response => {
         if (response.success) {
             location.reload();
         }
-    }
-
-    ApiConnector.logout(response => logout(response));
+    });
 }
 
-ApiConnector.current(response => getUserInfo(response));
+ApiConnector.current(response => {
+    if (response.success) {
+        ProfileWidget.showProfile(response.data);
+    }
+});
 
 getExchangeRates();
-setInterval(() => getExchangeRates(), 60000);
+setInterval(getExchangeRates, 60000);
 
-MoneyManager1.addMoneyCallback = data => {
-    const refillBalance = response => {
-        console.log('dataBalance', response);
-
+balanceMoney.addMoneyCallback = data => {
+    ApiConnector.addMoney(data, response => {
         if (response.success) {
             ProfileWidget.showProfile(response.data);
-            MoneyManager1.setMessage(response.success, 'Баланс успешно пополнен');
+            balanceMoney.setMessage(response.success, 'Баланс успешно пополнен');
         } else {
-            MoneyManager1.setMessage(response.success, response.error);
+            balanceMoney.setMessage(response.success, response.error);
         }
-    }
-
-    ApiConnector.addMoney(data, response => refillBalance(response));
+    });
 }
 
-MoneyManager1.conversionMoneyCallback = data => {
-    const convertBalance = response => {
-        console.log('dataConvertBalance', response);
-
+balanceMoney.conversionMoneyCallback = data => {
+    ApiConnector.convertMoney(data, response => {
         if (response.success) {
             ProfileWidget.showProfile(response.data);
-            MoneyManager1.setMessage(response.success, 'Конвертация прошла успешно');
+            balanceMoney.setMessage(response.success, 'Конвертация прошла успешно');
         } else {
-            MoneyManager1.setMessage(response.success, response.error);
+            balanceMoney.setMessage(response.success, response.error);
         }
-    }
-
-    ApiConnector.convertMoney(data, response => convertBalance(response));
+    });
 }
 
-MoneyManager1.sendMoneyCallback = data => {
-    const sendMoney = response => {
-        console.log('dataSendMoney', response);
-
+balanceMoney.sendMoneyCallback = data => {
+    ApiConnector.transferMoney(data, response => {
         if (response.success) {
             ProfileWidget.showProfile(response.data);
-            MoneyManager1.setMessage(response.success, 'Перевод прошел успешно');
+            balanceMoney.setMessage(response.success, 'Перевод прошел успешно');
         } else {
-            MoneyManager1.setMessage(response.success, response.error);
+            balanceMoney.setMessage(response.success, response.error);
         }
-    }
-
-    ApiConnector.transferMoney(data, response => sendMoney(response));
+    });
 }
 
 getFavoritesList();
 
 FavoritesWidget1.addUserCallback = data => {
-    const addUser = response => {
-        console.log('favoritesUsersData', response);
-
+    ApiConnector.addUserToFavorites(data, response => {
         if (response.success) {
-            FavoritesWidget1.clearTable();
-            FavoritesWidget1.fillTable(response.data);
-            MoneyManager1.updateUsersList(response.data);
-            FavoritesWidget1.setMessage(response.success, 'Пользователь добавлен');
+            listFavoritesWidget.clearTable();
+            listFavoritesWidget.fillTable(response.data);
+            balanceMoney.updateUsersList(response.data);
+            listFavoritesWidget.setMessage(response.success, 'Пользователь добавлен');
         } else {
-            FavoritesWidget1.setMessage(response.success, response.error);
+            listFavoritesWidget.setMessage(response.success, response.error);
         }
-    }
-
-    ApiConnector.addUserToFavorites(data, response => addUser(response));
+    });
 }
 
-FavoritesWidget1.removeUserCallback = data => {
-    const removeUser = response => {
-        console.log('removeUser', response);
-
+listFavoritesWidget.removeUserCallback = data => {
+    ApiConnector.removeUserFromFavorites(data, response => {
         if (response.success) {
-            FavoritesWidget1.clearTable();
-            FavoritesWidget1.fillTable(response.data);
-            MoneyManager1.updateUsersList(response.data);
-            FavoritesWidget1.setMessage(response.success, 'Пользователь удален');
+            listFavoritesWidget.clearTable();
+            listFavoritesWidget.fillTable(response.data);
+            balanceMoney.updateUsersList(response.data);
+            listFavoritesWidget.setMessage(response.success, 'Пользователь удален');
         } else {
-            FavoritesWidget1.setMessage(response.success, response.error);
+            listFavoritesWidget.setMessage(response.success, response.error);
         }
-    }
-
-    ApiConnector.removeUserFromFavorites(data, response => removeUser(response));
+    });
 }
